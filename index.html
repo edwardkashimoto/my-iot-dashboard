@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU Environmental Monitoring System</title>
+<meta name="description" content="Distributed IoT environmental monitoring dashboard — live temperature, humidity and air quality from Arduino Mega and ESP32 field stations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scanline-overlay" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <span class="brand-dot pulse-dot" id="live-pulse"></span>
+      </div>
+      <div class="brand-text">
+        <h1>CBU Environmental Monitoring System</h1>
+        <p class="brand-sub">Distributed IoT Environmental Monitoring</p>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <div class="clock" id="header-clock">--:--:--</div>
+      <div class="cloud-indicator" id="cloud-indicator">
+        <span class="status-dot status-unknown"></span>
+        <span class="status-label">Connecting to Cloud…</span>
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark or light mode" title="Toggle theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="dashboard">
+
+  <!-- ============================= SUMMARY CARDS ============================= -->
+  <section class="panel" aria-labelledby="summary-heading">
+    <div class="panel-heading">
+      <h2 id="summary-heading"><i class="fa-solid fa-gauge-high"></i> Live Readings</h2>
+      <span class="panel-note" id="last-updated-note">Last updated: —</span>
+    </div>
+
+    <div class="summary-grid" id="summary-grid">
+      <!-- Temperature -->
+      <article class="reading-card" data-metric="temperature">
+        <div class="reading-card-top">
+          <span class="reading-label">Temperature</span>
+          <i class="fa-solid fa-temperature-half reading-icon"></i>
+        </div>
+        <div class="reading-value" id="card-temperature-value">-- <span class="reading-unit">°C</span></div>
+        <div class="reading-meta">
+          <span class="reading-status-badge" id="card-temperature-status">NO DATA</span>
+        </div>
+        <div class="reading-footer">
+          <span class="reading-node" id="card-temperature-node">—</span>
+          <span class="reading-age" id="card-temperature-age">—</span>
+        </div>
+      </article>
+
+      <!-- Humidity -->
+      <article class="reading-card" data-metric="humidity">
+        <div class="reading-card-top">
+          <span class="reading-label">Humidity</span>
+          <i class="fa-solid fa-droplet reading-icon"></i>
+        </div>
+        <div class="reading-value" id="card-humidity-value">-- <span class="reading-unit">%</span></div>
+        <div class="reading-meta">
+          <span class="reading-status-badge" id="card-humidity-status">NO DATA</span>
+        </div>
+        <div class="reading-footer">
+          <span class="reading-node" id="card-humidity-node">—</span>
+          <span class="reading-age" id="card-humidity-age">—</span>
+        </div>
+      </article>
+
+      <!-- Air Quality -->
+      <article class="reading-card" data-metric="air-quality">
+        <div class="reading-card-top">
+          <span class="reading-label">Air Quality</span>
+          <i class="fa-solid fa-smog reading-icon"></i>
+        </div>
+        <div class="reading-value" id="card-air-quality-value">-- <span class="reading-unit">raw</span></div>
+        <div class="reading-meta">
+          <span class="reading-status-badge" id="card-air-quality-status">NO DATA</span>
+        </div>
+        <div class="reading-footer">
+          <span class="reading-node" id="card-air-quality-node">—</span>
+          <span class="reading-age" id="card-air-quality-age">—</span>
+        </div>
+      </article>
+
+      <!-- Light Intensity -->
+      <article class="reading-card" data-metric="light">
+        <div class="reading-card-top">
+          <span class="reading-label">Light Intensity</span>
+          <i class="fa-solid fa-sun reading-icon"></i>
+        </div>
+        <div class="reading-value" id="card-light-value">N/A</div>
+        <div class="reading-meta">
+          <span class="reading-status-badge status-na" id="card-light-status">NO SENSOR</span>
+        </div>
+        <div class="reading-footer">
+          <span class="reading-node">—</span>
+          <span class="reading-age">—</span>
+        </div>
+      </article>
+    </div>
+
+    <p class="calibration-note">
+      <i class="fa-solid fa-circle-info"></i>
+      MQ-135 air-quality values are <strong>raw ADC sensor output</strong>, not a calibrated gas
+      concentration (ppm). Proper ppm estimation requires sensor-specific calibration curves —
+      see <code>docs/architecture.md</code> in the project repository for details.
+    </p>
+  </section>
+
+  <!-- ============================= DEVICE STATUS ============================= -->
+  <section class="panel" aria-labelledby="device-status-heading">
+    <div class="panel-heading">
+      <h2 id="device-status-heading"><i class="fa-solid fa-server"></i> Device Status</h2>
+    </div>
+    <div class="device-status-grid" id="device-status-grid">
+      <div class="device-row" id="device-row-mega">
+        <div class="device-info">
+          <i class="fa-solid fa-microchip"></i>
+          <div>
+            <div class="device-name">Arduino Mega Station 1</div>
+            <div class="device-sub">DHT11 · MQ-135 · SIM800L</div>
+          </div>
+        </div>
+        <span class="status-pill status-unknown" id="status-pill-mega">UNKNOWN</span>
+      </div>
+      <div class="device-row" id="device-row-esp32">
+        <div class="device-info">
+          <i class="fa-solid fa-wifi"></i>
+          <div>
+            <div class="device-name">ESP32 Station 1</div>
+            <div class="device-sub">Wi-Fi Gateway · DHT11 · MQ-135</div>
+          </div>
+        </div>
+        <span class="status-pill status-unknown" id="status-pill-esp32">UNKNOWN</span>
+      </div>
+      <div class="device-row" id="device-row-cloud">
+        <div class="device-info">
+          <i class="fa-solid fa-cloud"></i>
+          <div>
+            <div class="device-name">ThingSpeak Cloud</div>
+            <div class="device-sub">Channel 3445381</div>
+          </div>
+        </div>
+        <span class="status-pill status-unknown" id="status-pill-cloud">UNKNOWN</span>
+      </div>
+    </div>
+    <div class="health-strip" id="health-strip">
+      <div class="health-item"><span class="health-label">Wi-Fi RSSI</span><span class="health-value" id="health-rssi">—</span></div>
+      <div class="health-item"><span class="health-label">Last Sync</span><span class="health-value" id="health-last-sync">—</span></div>
+      <div class="health-item"><span class="health-label">Uptime (session)</span><span class="health-value" id="health-uptime">—</span></div>
+    </div>
+  </section>
+
+  <!-- ============================= CHARTS ============================= -->
+  <section class="panel" aria-labelledby="charts-heading">
+    <div class="panel-heading">
+      <h2 id="charts-heading"><i class="fa-solid fa-chart-line"></i> Historical Trends</h2>
+      <div class="range-select" role="group" aria-label="Chart time range">
+        <button class="range-btn" data-range="1">1h</button>
+        <button class="range-btn" data-range="6">6h</button>
+        <button class="range-btn active" data-range="24">24h</button>
+        <button class="range-btn" data-range="168">7d</button>
+        <button class="range-btn" data-range="720">30d</button>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Temperature</h3>
+        <div class="chart-wrap"><canvas id="chart-temperature"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Humidity</h3>
+        <div class="chart-wrap"><canvas id="chart-humidity"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Air Quality</h3>
+        <div class="chart-wrap"><canvas id="chart-air-quality"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Light Intensity</h3>
+        <div class="chart-wrap chart-empty-state" id="chart-light-empty">
+          <i class="fa-regular fa-sun"></i>
+          <p>No light sensor installed on either node.</p>
+        </div>
+        <canvas id="chart-light" style="display:none;"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-actions">
+      <button class="btn-secondary" id="btn-export-csv"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+      <button class="btn-secondary" id="btn-print"><i class="fa-solid fa-print"></i> Print report</button>
+    </div>
+  </section>
+
+  <!-- ============================= COMPARISON ============================= -->
+  <section class="panel" aria-labelledby="comparison-heading">
+    <div class="panel-heading">
+      <h2 id="comparison-heading"><i class="fa-solid fa-code-compare"></i> Multi-Node Comparison</h2>
+      <span class="panel-note">Mega Station 1 vs ESP32 Station 1</span>
+    </div>
+    <div class="charts-grid two-col">
+      <div class="chart-card">
+        <h3>Temperature Comparison</h3>
+        <div class="chart-wrap"><canvas id="chart-compare-temperature"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Humidity Comparison</h3>
+        <div class="chart-wrap"><canvas id="chart-compare-humidity"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= ALERTS ============================= -->
+  <section class="panel" aria-labelledby="alerts-heading">
+    <div class="panel-heading">
+      <h2 id="alerts-heading"><i class="fa-solid fa-triangle-exclamation"></i> Recent Alerts</h2>
+    </div>
+    <ul class="alert-list" id="alert-list">
+      <li class="alert-empty">No alerts in the current data window.</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>CBU Environmental Monitoring System &middot; Data via ThingSpeak Cloud &middot; Channel 3445381</p>
+  <p class="footer-sub">No local server required. This page runs entirely from static files and public cloud APIs.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
