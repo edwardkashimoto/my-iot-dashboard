@@ -1,0 +1,32 @@
+# -----------------------------------------------------------------------
+# Secrets — never commit real config files containing Wi-Fi credentials,
+# ThingSpeak keys, or phone numbers. Only the *.example.h templates and
+# dashboard/config.js (read-only key) are meant to be committed.
+# -----------------------------------------------------------------------
+arduino-mega/**/config.h
+esp32/**/config.h
+
+# -----------------------------------------------------------------------
+# Arduino IDE / build artifacts
+# -----------------------------------------------------------------------
+*.hex
+*.bin
+*.elf
+build/
+.pio/
+.vscode/
+
+# -----------------------------------------------------------------------
+# OS / editor noise
+# -----------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# -----------------------------------------------------------------------
+# Node (not used at runtime by this project, but ignored in case any
+# tooling like a local link-checker or formatter is used during dev)
+# -----------------------------------------------------------------------
+node_modules/
+npm-debug.log
