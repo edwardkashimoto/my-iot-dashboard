@@ -16,7 +16,7 @@
 
 const CONFIG = {
   THINGSPEAK_CHANNEL_ID: "3445381",
-  THINGSPEAK_READ_API_KEY: "8VNDEGPDRUZL4999", // safe to expose: read-only, channel-scoped
+  THINGSPEAK_READ_API_KEY: "VBYAVCI544O3GG0R", // safe to expose: read-only, channel-scoped
 
   // How often the dashboard polls ThingSpeak for new data (ms).
   // Kept in line with the ESP32's own upload interval to avoid hammering
